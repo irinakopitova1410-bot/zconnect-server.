@@ -1,27 +1,37 @@
 const express = require('express');
 const app = express();
+
+// 1. Questa riga permette al server di LEGGERE i dati dall'app
 app.use(express.json());
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 10000;
 
-// Rotta per verificare se il server funziona
 app.get('/', (req, res) => {
-    res.send('Il tuo nuovo server di timbratura è ONLINE!');
+    res.send('Il server di timbratura è ONLINE!');
 });
 
-// Rotta per ricevere la timbratura (corretta e migliorata)
 app.post('/timbra', (req, res) => {
-    const { utente, lat, lon, precisione } = req.body;
+    // 2. MODIFICA: precisione = 0 evita l'errore se l'app non la manda
+    const { utente, lat, lon, precisione = 0 } = req.body;
     
-    // CONTROLLO PRECISIONE: Se il GPS sballa oltre i 25 metri, rifiuta
-    if (precisione > 25) {
+    // 3. MODIFICA: Controllo più permissivo per i test
+    if (precisione > 0 && precisione > 25) { 
+        console.log(`❌ GPS instabile per ${utente} (${precisione}m)`);
         return res.status(400).json({ 
             status: "Errore", 
-            message: "GPS instabile (Precisione: " + precisione + "m). Spostati all'aperto." 
+            message: "GPS instabile. Spostati all'aperto." 
         });
     }
 
-    console.log(`Timbratura ricevuta da ${utente} a Pos: ${lat}, ${lon}`);
+    // 4. Se i dati arrivano, li stampiamo chiaramente nel log
+    if (utente) {
+        console.log(`✅ TIMBRATURA RICEVUTA!`);
+        console.log(`👤 Utente: ${utente}`);
+        console.log(`📍 Posizione: ${lat}, ${lon}`);
+    } else {
+        console.log("⚠️ Ricevuto un pacchetto, ma il nome utente è vuoto.");
+    }
+
     res.json({ 
         status: "OK", 
         message: "Timbratura registrata con successo!" 
