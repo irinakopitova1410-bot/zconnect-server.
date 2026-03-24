@@ -1,29 +1,43 @@
 const express = require('express');
 const app = express();
 
-// Questi servono per leggere i dati dall'app
 app.use(express.json());
-app.use(express.text()); // Legge anche se l'app manda testo semplice
 app.use(express.urlencoded({ extended: true }));
 
 app.post('/timbra', (req, res) => {
-    let dati = req.body;
+    console.log("Dati ricevuti dall'app:", req.body);
 
-    // Se i dati arrivano come testo, proviamo a trasformarli in oggetto
-    if (typeof dati === 'string') {
-        try { dati = JSON.parse(dati); } catch(e) {}
+    let utente, lat, lon;
+
+    // TRUCCO: Se l'app manda i dati nel formato "strano" che abbiamo visto nei log
+    const chiavi = Object.keys(req.body);
+    if (chiavi.length > 0 && chiavi[0].includes('{')) {
+        try {
+            const datiPuliti = JSON.parse(chiavi[0]);
+            utente = datiPuliti.utente;
+            lat = datiPuliti.lat;
+            lon = datiPuliti.lon;
+        } catch (e) {
+            console.log("Errore pulizia dati:", e);
+        }
+    } else {
+        // Formato standard
+        utente = req.body.utente;
+        lat = req.body.lat;
+        lon = req.body.lon;
     }
-
-    const { utente, lat, lon } = dati;
 
     if (!utente) {
-        console.log("⚠️ Ricevuto qualcosa, ma non trovo il nome utente:", dati);
-        return res.status(400).send("Nome mancante");
+        console.log("⚠️ Ancora non trovo l'utente. Dati ricevuti:", req.body);
+        return res.status(400).send("Errore: Nome mancante");
     }
 
-    console.log(`✅ TIMBRATURA RICEVUTA! Utente: ${utente}, Pos: ${lat}, ${lon}`);
-    res.json({ status: "OK", message: "Registrato!" });
+    console.log(`✅ TIMBRATURA SUCCESSFUL!`);
+    console.log(`👤 Utente: ${utente}`);
+    console.log(`📍 Posizione: ${lat || 'N/A'}, ${lon || 'N/A'}`);
+
+    res.json({ status: "OK", message: "Timbratura registrata!" });
 });
 
 const PORT = process.env.PORT || 10000;
-app.listen(PORT, () => console.log("Server Pronto!"));
+app.listen(PORT, () => console.log(`Server online sulla porta ${PORT}`));
