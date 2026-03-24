@@ -3,6 +3,7 @@ const app = express();
 
 // 1. Questa riga permette al server di LEGGERE i dati dall'app
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 const PORT = process.env.PORT || 10000;
 
