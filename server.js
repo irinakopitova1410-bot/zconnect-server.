@@ -1,24 +1,29 @@
 const express = require('express');
 const app = express();
 
-// Accetta sia JSON che moduli semplici
+// Questi servono per leggere i dati dall'app
 app.use(express.json());
+app.use(express.text()); // Legge anche se l'app manda testo semplice
 app.use(express.urlencoded({ extended: true }));
 
 app.post('/timbra', (req, res) => {
-    // LOG DI EMERGENZA: Vediamo cosa arriva davvero
-    console.log("Dati grezzi ricevuti:", req.body);
+    let dati = req.body;
 
-    const { utente, lat, lon } = req.body;
-
-    if (!utente || utente === "") {
-        console.log("⚠️ Il server ha ricevuto un messaggio, ma il campo 'utente' non è stato trovato.");
-        return res.status(400).send("Nome utente mancante");
+    // Se i dati arrivano come testo, proviamo a trasformarli in oggetto
+    if (typeof dati === 'string') {
+        try { dati = JSON.parse(dati); } catch(e) {}
     }
 
-    console.log(`✅ TIMBRATURA OK! Utente: ${utente}, Lat: ${lat}, Lon: ${lon}`);
-    res.json({ status: "OK", message: "Ricevuto!" });
+    const { utente, lat, lon } = dati;
+
+    if (!utente) {
+        console.log("⚠️ Ricevuto qualcosa, ma non trovo il nome utente:", dati);
+        return res.status(400).send("Nome mancante");
+    }
+
+    console.log(`✅ TIMBRATURA RICEVUTA! Utente: ${utente}, Pos: ${lat}, ${lon}`);
+    res.json({ status: "OK", message: "Registrato!" });
 });
 
 const PORT = process.env.PORT || 10000;
-app.listen(PORT, () => console.log(`Server attivo sulla porta ${PORT}`));
+app.listen(PORT, () => console.log("Server Pronto!"));
